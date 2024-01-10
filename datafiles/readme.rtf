@@ -1,0 +1,109 @@
+{\rtf1\ansi\ansicpg1252\deff0\nouicompat\deflang1033{\fonttbl{\f0\fnil\fcharset0 Constantia;}{\f1\fnil\fcharset0 Calibri;}}
+{\*\generator Riched20 6.3.9600}{\*\mmathPr\mdispDef1\mwrapIndent1440 }\viewkind4\uc1 
+\pard\sa200\sl276\slmult1\qc\f0\fs96\lang9 EZ Car Physics\par
+\fs24 Hello and welcome to EZ Car Physics!\par
+\fs48 Tutorial\par
+
+\pard\sa200\sl276\slmult1 1. Introduction\fs24\par
+Ez Car Physics is a MultiPurpose game engine for all racing purposes. The code has been optimized but some variables can be deleted to optimize the game even further. Knowledge of Physics or Mathematics is helpful but not neccesary to understand or to use EZ Car Physics. An explanation of code will be below.\par
+\fs48 2. How to Use\fs24\par
+Using EZ Car Physics is simple. Either use the default models provided or make or download your own car models from online. The different parameters allow you to fit the tires to the chassis correctly.\par
+(The code is commented and pretty self-explanatory but another explanation is provided here.)\par
+In the car Create event, the car variables are listed.\par
+Init vars are simply variables set to 0, they are intended to be non-customizable.\par
+If you are making a car game, for instance with a Menu to select or customize your car, the variables below are the ones to customize.\par
+\par
+\b Controls\b0\par
+WSAD, or WS+Mouse to move, V to change view, E to Emergency-brake.\par
+\par
+\b //basic vars\b0\par
+Horsepower = How fast the car goes\par
+maxSteer = the max angle the steering is clamped by.\par
+mouseSteering = simple to use mouse or keyboard input.\par
+racingSteering = simply to add a fake force-feedback at high speeds, making it difficult to overturn the tires at high speeds.\par
+\b //chassis vars\par
+\b0 frontLongSep, how far away the front wheels are from the chassis midpoint.\par
+rearLongSep, how far away the rear wheels are from the chassis midpoint.\par
+frontLatSep, how far away the front tires are from the chassis midpoint, (in terms of left and right.) For instance, if you have a hotrod, and the front wheels are tight together, but the backwheels are spaced farther apart.\par
+backLatSep, the left/right spacing of the back tires.\par
+\par
+physics_mass_properties, to determine the center of mass. If you put the y value positive it will tend to fishtail constantly.\par
+weightFactorZ, the more this is the taller the Z center of mass. So a truck should have a higher weightFactorZ.\par
+\b //traction vars\par
+\b0 frontCamber, the tilt of the front tires. Outrageous drift vehicles may have a high frontCamber. This also affects the physics, the bigger the camber the more resistance the front tire has against high angular velocities.\par
+rearCamber, same as front Camber, but one important note. Setting the rearCamber to a high value will reduce the likely hood of the car getting into an uncontrollable spinout.\par
+sideWall is a variable meant to simulate tires digging into the ground. Remember Jeep scenes in movies where the Jeep always seems to drift and fishtail around, yet never gets into uncontrollable spinouts? You want this variable around .01 or .03, or else the car will spinout too easily, like on ice. But if the variable is too high, the car will never fishtail or spinout at all.\par
+\par
+frontGrip, how much grip the front tires have. More grip means tighter corners.\par
+rearGrip, how much grip of the rear tires. More grip means more understeer and harder to drift around corners. But too little grip and the car will fishtail and spinout too much.\par
+weightFactor, how much to take into account weightshifting on the tires. Normally when you are braking, the weight should shift to the front and make it easier to steer and also easier to drift and fishtail. Set to zero if the Z center of gravity is zero, such as a flat chassis, or near zero such as a formula 1.\par
+\b //misc vars\b0\par
+topSpeedish, this is not exactly the top speed, but directly influences what the top speed is.\par
+drive, whether or not the car is frontWheel, rearWheel or 4wd. If you want a drift car its best to put rearWheel (0), 4wd (2) is not easily able to drift.\par
+\par
+\par
+\fs28 The Physics\par
+\fs24 The car physics occur in the Draw event. The physics is Box2d. \par
+\b Steering\b0\par
+The first part of the code is the basic steering input.\par
+The steering is slightly more advanced than most. Firstly the wheel tends to align with the direction the car is going on the road. So if you are drifting the wheel will tend to align with the drift, making better drifts. \par
+It gets slightly complicated when you examine the racingSteering code. But all in all you can delete all of the Steering code and make your own steering code if you wish, it will not effect the rest of the game.\par
+Remember that the final variable of the tire is cp, not steer. So if you are making your own custom steering, remember to set the cp value, as cp is the actual tire angle. And of course remember to set the joints to the value.\par
+\par
+\b Physics\par
+\b0 The physics are fairly straightforward. It uses Bicyle model rather than 4 tires in order to maximize the framerate of the game. If you want to make a racing game with a large amount of opponents bicycle model will allow more enemy opponents.\par
+The phy_angular_velocity/=1+sin... code can be deleted if you want to super-optimize your game. But be warned that code is key to preventing spin-outs and making the car more fun to drive.\par
+The CalculateTirePositions() code above it can also be deleted, however this will interfere with the smoke fx functionality as the smoke fx must first retrieve the tire values in order to spawn there, since we are using bicycle model and not 4 tire objects.\par
+\par
+\b longitudal\b0\par
+The gas and brake is fairly straightforward, however it looks confusing because it accomodates both 4wheel, rearWheel and frontWheel drive settings. \par
+In essence, when you push the gas it pushes the tire forward longitudally.\par
+If the car is moving forward longitudally, and you push an input which is against the longitudal direction, it will "brake" the car and not exert as much force as it would normally. If you want stronger brakes change /12 to /6 or some lower value.\par
+\par
+\b lateral\par
+\b0 the lateral is fairly straightfoward and the integral part of this process. With each tire simply run the lateralGrip script to apply lateral force on the tire. the argument specifies how much grip to give to the tire in this frametick.\par
+Inside the script we define datavars, mainly the direction of tire, vel amount and velDir, and also the lateral velocity (latVel).\par
+Important to note is that we calculate aoa (angle of attack) based on the difference between the direction the tire is going, and the direction the tire is angled.\par
+Thus if the tire is going in reverse (negative longVel) we flip the aoa by 180 or else we will have problems.\par
+ \par
+Second we need to calculate Pajecka formula or else the car will not behave in a believable manner, if we do not compute Pajecka the car will never drift or slide nicely.\par
+Rather than waste CPU cycles using the exact formula we simply approximate it. If the aoa is less than 6 then it slopes downward to zero. If the aoa is between 6 and 10 we get full (inverse) pajecka. From then outward it slopes downward to no less than 40-60% ish. This will give a nice drift.\par
+Finally we apply the latGrip to be inversely related to pajecka. If you want more precision or just for fun, you can delete this code and set latGrip exactly to argument0*OfficialPajeckaFormula from internet, and play around with the values, to maximize realism.\par
+\par
+Third we check for E-brake, if it is pressed we effect the back wheel different from the front wheel, since in real-life E-brake is usually never applied to the front wheels.\par
+This next piece of code is moderately important to understand. The first 2 lines cancels the lateral velocity of the tire. It can only cancel as much as the grip allows. \par
+The next line cancels the absolute velocity of the tire, based on the direction of movement. Similar to sliding a table, the lateral velocity is not taken into account. This occurs during braking especially before the days of ABS systems which means cars would easily get into a fishtail and crash. ABS simply reduces the duration of tire-lock but not altogether, using sensors to try and even out the effect, locking and unlocking each tire to prevent absolute fishtail, but never perfectly, the car should absolutely still fishtail. Thus when the brakes are applied, the tire lock occurs a little bit randomly.\par
+Secondly, at high speeds then it cancels a little bit more of the absolute velocity than the tire lateral, this is to simulate "wrenching" of the tire which is the CP is actually bent towards the direction the road is pushing it. And this is what "dirRatio" means, it interpolates (linearly) the ratio between lateral dominance and absolute velocity dominance.\par
+If the ratio thing seems confusing and you wish to delete this code, may I warn you that this code is essential for good (visual) performance and without it the drifting will not be as good.\par
+Finally, the code ConvertToMph(vel)/500 is indicative of tire softness. Setting it to /300 will be very soft, tires which fare poorly for high speeds but make it easy to catch opposite lock and drift. Highly soft tires will be dominated by the road and bend to the road pushing it, making it well to drift at common speeds. But at high speeds, their ability to bend into the road will catch into a high speed opposite lock and the car will spin out of control. It is best to simply leave the value at /500 and no less than /400.\par
+\par
+\fs28 Drawing\fs24\par
+The drawing code has been hardcoded so if you want alternate sized tires, you shall have to manually tweak the values, near the bottom of the car Draw Event. Model loading is located in the master object.\par
+\fs28 Environment Mapping\par
+\fs24 This game performs environment mapping without shaders, this is to maximize compatibility on all systems. This uses surfaces which is compatible on most systems. The code is in the Draw GUI since it uses 2d projection.\par
+Firstly we draw the car texture, sp_carTex.\par
+Next we render a polygon, containing a moving texture (the environment map.)\par
+Finally, we draw whatever parts of the car we don't want to be glossy, to be put over the polygon so they remain lukewarm.\fs28\par
+\fs24\par
+\par
+\par
+\par
+\par
+\par
+That is about it for EZ Car Physics and if you have any questions or comments please email cozysoft@mail.com, thankyou.\par
+\par
+\par
+\par
+\par
+\par
+\par
+\b\par
+\b0\fs48\par
+\par
+\fs96\par
+
+\pard\sa200\sl276\slmult1\qc\f1\par
+
+\pard\sa200\sl276\slmult1\fs22\par
+}
+ 
